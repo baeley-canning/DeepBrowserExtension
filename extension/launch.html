@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RecruitMe</title>
+<style>
+  :root { --bg:#faf9f7; --panel:#fffefc; --border:#d5cec3; --text:#24211e; --text-2:#6f6862; --accent:#c96442; --accent-ink:#fff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1a18; --panel:#221f1d; --border:#4a4540; --text:#eeeae5; --text-2:#a49d95; --accent:#d97757; --accent-ink:#1b1a18; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    width: 280px; margin: 0; padding: 14px; background: var(--bg); color: var(--text);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  h1 { font-size: 14.5px; margin: 0 0 10px; font-weight: 600; }
+  button, a.btn {
+    display: block; width: 100%; text-align: center; text-decoration: none;
+    font: inherit; padding: 9px 12px; border-radius: 9px; cursor: pointer; margin-bottom: 8px;
+    border: 1px solid var(--border); background: var(--panel); color: var(--text);
+  }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 550; }
+  p { margin: 8px 0 0; font-size: 12px; color: var(--text-2); }
+  #err { color: #a8403c; font-size: 12px; margin-top: 8px; }
+</style>
+</head>
+<body>
+  <h1>RecruitMe</h1>
+  <!-- A popup ALWAYS renders when the icon is clicked. The side panel does not:
+       it depends on chrome.sidePanel, which needs the service worker awake and
+       a user gesture, and when that chain broke the icon silently did nothing.
+       This is the guaranteed entry point; the buttons are the ways onward. -->
+  <button id="side" class="primary" type="button">Open side panel</button>
+  <a class="btn" id="tab" href="sidepanel.html" target="_blank" rel="noreferrer">Open in a tab</a>
+  <a class="btn" id="opts" href="options.html" target="_blank" rel="noreferrer">Options — DeepSeek key</a>
+  <p>The side panel stays open while you browse. A tab works too, and survives losing focus.</p>
+  <div id="err"></div>
+  <script src="launch.js"></script>
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sourcing Agent</title>
+<style>
+  /* Docked side panel. A popup was the wrong container — it closes the moment
+     focus leaves it, and a hunt runs for minutes while the recruiter keeps
+     using the very tab it is driving. */
+  :root {
+    --bg: #faf9f7;
+    --panel: #fffefc;
+    --surface: #ffffff;
+    --surface-2: #f2efea;
+    --border: #e5e0d8;
+    --border-strong: #d5cec3;
+    --text: #24211e;
+    --text-2: #6f6862;
+    --text-3: #9a938b;
+    --accent: #c96442;
+    --accent-ink: #ffffff;
+    --warn: #8a6416;
+    --warn-bg: #fbf3e2;
+    --bad: #a8403c;
+    --bad-bg: #fbecea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1a18;
+      --panel: #221f1d;
+      --surface: #2a2724;
+      --surface-2: #302c29;
+      --border: #3b3733;
+      --border-strong: #4a4540;
+      --text: #eeeae5;
+      --text-2: #a49d95;
+      --text-3: #7d766f;
+      --accent: #d97757;
+      --accent-ink: #1b1a18;
+      --warn: #d7ab55;
+      --warn-bg: #302a1c;
+      --bad: #de8781;
+      --bad-bg: #33211f;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex; flex-direction: column; -webkit-font-smoothing: antialiased;
+  }
+
+  /* Header */
+  header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 14px; flex: none;
+  }
+  .mark {
+    width: 16px; height: 16px; flex: none; color: var(--accent);
+  }
+  .brand { font-weight: 600; font-size: 14.5px; letter-spacing: -.01em; }
+  .spacer { flex: 1; }
+  .model {
+    font-size: 12.5px; color: var(--text-2);
+    padding: 3px 8px; border-radius: 6px;
+  }
+
+  /* Conversation */
+  #thread {
+    flex: 1; overflow-y: auto; padding: 6px 14px 14px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .msg .bubble { border-radius: 12px; padding: 10px 13px; }
+  .msg.user .bubble {
+    background: var(--surface-2); width: fit-content; max-width: 92%; margin-left: auto;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .msg.agent .bubble {
+    background: var(--panel); border: 1px solid var(--border);
+    white-space: pre-wrap; word-break: break-word;
+  }
+
+  .empty { color: var(--text-2); margin: auto 0; text-align: center; padding: 0 8px; }
+  .empty h2 { font-size: 16px; margin: 0 0 6px; color: var(--text); font-weight: 600; }
+  .empty p { margin: 0 0 14px; font-size: 13px; }
+  .suggest {
+    display: block; width: 100%; text-align: left; margin-top: 7px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 9px;
+    padding: 9px 11px; font: inherit; font-size: 13px; color: var(--text); cursor: pointer;
+  }
+  .suggest:hover { border-color: var(--border-strong); }
+
+  /* Live trace of tool calls */
+  .trace { display: flex; flex-direction: column; gap: 5px; padding-left: 2px; }
+  .step { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; color: var(--text-2); }
+  .step .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex: none; margin-top: 7px; }
+  .step .tool { color: var(--text); font-weight: 550; }
+  .working { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-2); }
+  .spin {
+    width: 11px; height: 11px; flex: none; border: 2px solid var(--border-strong);
+    border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+
+  .banner { border-radius: 9px; padding: 9px 11px; font-size: 13px; }
+  .banner.warn { background: var(--warn-bg); color: var(--warn); }
+  .banner.bad  { background: var(--bad-bg);  color: var(--bad); }
+
+  /* Composer */
+  footer { flex: none; padding: 0 12px 10px; }
+  .composer {
+    background: var(--panel); border: 1px solid var(--border-strong);
+    border-radius: 14px; padding: 10px 12px 8px;
+  }
+  #ask {
+    width: 100%; border: 0; outline: 0; resize: none; background: transparent;
+    color: var(--text); font: inherit; max-height: 180px; min-height: 22px;
+  }
+  #ask::placeholder { color: var(--text-3); }
+  .controls { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  .mode { font-size: 12.5px; color: var(--text-2); display: flex; align-items: center; gap: 5px; }
+  .send {
+    width: 30px; height: 30px; flex: none; border: 0; border-radius: 50%;
+    background: var(--accent); color: var(--accent-ink); cursor: pointer;
+    display: grid; place-items: center; padding: 0;
+  }
+  .send:disabled { opacity: .4; cursor: default; }
+  .ghost {
+    border: 1px solid var(--border-strong); background: transparent; color: var(--text);
+    border-radius: 8px; padding: 4px 10px; font: inherit; font-size: 12.5px; cursor: pointer;
+  }
+
+  .icon-btn {
+    width: 28px; height: 28px; flex: none; padding: 0; border-radius: 7px;
+    border: 1px solid transparent; background: transparent; color: var(--text-2);
+    display: grid; place-items: center; cursor: pointer;
+  }
+  .icon-btn:hover { background: var(--surface-2); color: var(--text); }
+  #attachments:not(:empty) { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 2px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 7px; padding: 4px 6px 4px 9px; font-size: 12.5px;
+  }
+  .chip .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px; }
+  .chip .sz { color: var(--text-3); flex: none; }
+  .chip button {
+    border: 0; background: transparent; color: var(--text-3); cursor: pointer;
+    font-size: 15px; line-height: 1; padding: 0 2px; border-radius: 4px;
+  }
+  .chip button:hover { color: var(--text); }
+  .chip.loading { opacity: .65; }
+   .disclaimer { text-align: center; font-size: 11.5px; color: var(--text-3); margin: 8px 0 0; }
+   .location-input {
+     width: 100%; border: 1px solid var(--border); border-radius: 8px;
+     padding: 6px 10px; font: inherit; font-size: 13px; color: var(--text);
+     background: var(--panel); margin-top: 6px;
+   }
+   .location-input::placeholder { color: var(--text-3); }
+   .platform-toggles { display: flex; gap: 14px; margin-top: 6px; }
+   .ptoggle {
+     display: inline-flex; align-items: center; gap: 6px;
+     font-size: 12.5px; color: var(--text-2); cursor: pointer; user-select: none;
+   }
+   .ptoggle input { accent-color: var(--accent); }
+</style>
+</head>
+<body>
+  <header>
+    <svg class="mark" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
+      <path d="M8 0l1.9 5.1L15 7l-5.1 1.9L8 14l-1.9-5.1L1 7l5.1-1.9z"/>
+    </svg>
+    <span class="brand" id="brand-name">Sourcing Agent</span>
+    <span class="spacer"></span>
+    <span class="model">DeepSeek V4</span>
+  </header>
+
+  <div id="boot-error" style="display:none;margin:10px;padding:10px;border-radius:8px;
+       background:#fbecea;color:#a8403c;font:12px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap"></div>
+  <script>
+    // Classic, and FIRST. If sidepanel.js (a module) throws while loading, the
+    // buttons silently do nothing and the reason is only in a console. Paint it
+    // into the page instead.
+    (function () {
+      function show(msg) {
+        var el = document.getElementById("boot-error");
+        if (!el) return;
+        el.style.display = "block";
+        el.textContent = "Panel error — this is why the buttons do nothing:\n\n" + msg;
+      }
+      window.addEventListener("error", function (e) {
+        show((e.message || "error") + "\n" + (e.filename || "") + ":" + (e.lineno || ""));
+      });
+      window.addEventListener("unhandledrejection", function (e) {
+        show(String((e.reason && e.reason.stack) || e.reason));
+      });
+    })();
+  </script>
+  <div id="thread">
+    <div class="empty" id="empty">
+      <h2>Find candidates — your way</h2>
+      <p>Paste a full job description, a few keywords, or just type a simple ask. It searches LinkedIn and SEEK in its own tab and ranks what it reads.</p>
+      <button class="suggest" data-fill="Find me senior .NET developers in Wellington and rank the top five.&#10;&#10;">Senior .NET developers in Wellington</button>
+      <button class="suggest" data-fill="Find me the top 3 applicants for the role below and rate them out of 10. Please also provide a separate recount of how you did your search, so I can learn how you work.&#10;&#10;">Top 3, rated out of 10, plus how you searched</button>
+      <button class="suggest" data-fill="Find the best candidates in Wellington for the role below. Open their profiles and read the real work history before judging — do not go on job titles alone. Tell me who you rejected and why.&#10;&#10;">Wellington only, and tell me who you rejected</button>
+    </div>
+  </div>
+
+  <footer>
+    <div class="composer">
+      <textarea id="ask" rows="2" placeholder="Paste a JD, type a role, or describe who you're looking for…"></textarea>
+      <input type="text" id="location" class="location-input" placeholder="Location (e.g. Wellington, New Zealand) — optional, used if the JD doesn't mention one">
+      <div class="platform-toggles">
+        <label class="ptoggle"><input type="checkbox" id="platform-linkedin" checked> LinkedIn</label>
+        <label class="ptoggle"><input type="checkbox" id="platform-seek" checked> SEEK</label>
+      </div>
+      <div id="attachments"></div>
+      <div class="controls">
+        <input type="file" id="file" accept=".pdf,.docx,.txt,.md,.rtf,application/pdf,text/plain" hidden>
+        <button id="attach" class="icon-btn" type="button" title="Attach a job description">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M10.5 5.5l-4.6 4.6a1.6 1.6 0 002.3 2.3l5-5a3 3 0 00-4.3-4.3l-5 5a4.5 4.5 0 006.4 6.4l4.1-4.1"/>
+          </svg>
+        </button>
+        <button id="diagnose" class="ghost" type="button" title="Check the extension can read LinkedIn">Diagnose</button>
+        <button id="report" class="ghost" type="button" title="Copy a full report of what just happened">Copy report</button>
+        <span class="mode" id="hint">Reads pages · never messages anyone</span>
+        <span class="spacer"></span>
+        <button id="continue" class="ghost" type="button" title="Keep searching with a fresh budget" hidden>Continue</button>
+        <button id="stop" class="ghost" type="button" hidden>Stop</button>
+        <button id="send" class="send" type="button" title="Ask (Enter)">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true">
+            <path d="M8 1.5l5 5-1.1 1.1L8.8 4.4V14H7.2V4.4L4.1 7.6 3 6.5z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <p class="disclaimer">Reads pages in your browser. Check its findings.</p>
+  </footer>
+
+  <script src="brand.js"></script>
+  <script src="license.js"></script>
+  <script src="panel-lib.js"></script>
+  <script src="sidepanel.js" id="panel-module"></script>
+  <script>
+    // A module script that fails to LOAD — 404, parse error, a bad import
+    // anywhere in its graph — fires "error" on the ELEMENT, and does not
+    // reliably reach window.onerror. The boot reporter above would therefore
+    // miss the exact failure it was written for. Catch it here too.
+    (function () {
+      var tag = document.getElementById("panel-module");
+      if (!tag) return;
+      tag.addEventListener("error", function () {
+        var el = document.getElementById("boot-error");
+        if (!el) return;
+        el.style.display = "block";
+        el.textContent =
+          "sidepanel.js failed to LOAD. Nothing on this page will respond.\n\n" +
+          "Usually this means the extension is loaded from a stale folder, or a " +
+          "file it imports is missing. Reinstall it: chrome://extensions -> remove " +
+          "the existing entry -> Load unpacked -> pick the extension folder.";
+      });
+      // Belt and braces: if the module ran, it sets this flag. If it has not
+      // appeared shortly after load, the module never executed.
+      window.addEventListener("load", function () {
+        setTimeout(function () {
+          if (window.__recruitmePanelReady) return;
+          var el = document.getElementById("boot-error");
+          if (!el || el.style.display === "block") return;
+          el.style.display = "block";
+          el.textContent =
+            "sidepanel.js did not run. The page rendered but no code is attached, " +
+            "so every button is inert.\n\nThis is what a stale install looks like. " +
+            "chrome://extensions -> remove the existing entry -> Load unpacked -> " +
+            "the extension folder.";
+        }, 1500);
+      });
+    })();
+  </script>
+</body>
+</html>

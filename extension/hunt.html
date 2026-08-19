@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RecruitMe Hunt</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f5f5f5;
+    --text: #1a1a1a;
+    --text-muted: #666666;
+    --border: #d0d0d0;
+    --accent: #0a66c2;
+    --accent-hover: #004182;
+    --danger: #b02a37;
+    --danger-bg: #f8d7da;
+    --warning: #9a6700;
+    --warning-bg: #fff3cd;
+    --chip-bg: #e8f0fe;
+    --chip-text: #0a66c2;
+    --top-rank-border: #0a66c2;
+    --top-rank-bg: #f0f7ff;
+    --badge-bg: #e8f0fe;
+    --badge-text: #0a66c2;
+    --link: #0a66c2;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1e;
+      --bg-secondary: #2d2d2d;
+      --text: #e0e0e0;
+      --text-muted: #9a9a9a;
+      --border: #444444;
+      --accent: #6cb4ee;
+      --accent-hover: #8ec5f2;
+      --danger: #f28b82;
+      --danger-bg: #3c1e1e;
+      --warning: #fdd663;
+      --warning-bg: #3a2f0a;
+      --chip-bg: #2d3a4a;
+      --chip-text: #6cb4ee;
+      --top-rank-border: #6cb4ee;
+      --top-rank-bg: #1a2a3a;
+      --badge-bg: #2d3a4a;
+      --badge-text: #6cb4ee;
+      --link: #6cb4ee;
+    }
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    width: 420px;
+    max-height: 600px;
+    overflow-y: auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text);
+    background: var(--bg);
+  }
+
+  .container {
+    padding: 16px;
+  }
+
+  h1 {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+
+  .muted {
+    color: var(--text-muted);
+  }
+
+  .section {
+    margin-bottom: 16px;
+  }
+
+  label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  select,
+  input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  select:disabled,
+  input:disabled {
+    opacity: 0.6;
+  }
+
+  .job-meta {
+    margin-bottom: 8px;
+  }
+
+  .job-meta .title {
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .job-meta .company {
+    color: var(--text-muted);
+  }
+
+  .query-list {
+    list-style: none;
+    margin: 8px 0;
+  }
+
+  .query-list li {
+    padding: 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    margin-bottom: 6px;
+  }
+
+  .query-list .query-text {
+    font-weight: 500;
+  }
+
+  .query-list .rationale {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 8px 0;
+  }
+
+  .chip {
+    background: var(--chip-bg);
+    color: var(--chip-text);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .limits {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin: 8px 0;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  .btn:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-danger {
+    background: var(--danger);
+    color: var(--bg);
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    background: var(--danger);
+    opacity: 0.9;
+  }
+
+  .progress {
+    margin: 8px 0;
+  }
+
+  .progress .progress-line {
+    margin-bottom: 4px;
+  }
+
+  .progress .last-action {
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  .warning-banner {
+    background: var(--warning-bg);
+    color: var(--warning);
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin: 8px 0;
+    font-size: 13px;
+  }
+
+  .halted-banner {
+    background: var(--danger-bg);
+    color: var(--danger);
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin: 8px 0;
+    font-weight: 600;
+  }
+
+  .error-banner {
+    background: var(--danger-bg);
+    color: var(--danger);
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin: 8px 0;
+  }
+
+  .results-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+  }
+
+  .result-item {
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .result-item.top-rank {
+    border-left: 3px solid var(--top-rank-border);
+    background: var(--top-rank-bg);
+    padding-left: 12px;
+  }
+
+  .result-item .rank {
+    font-weight: 700;
+    color: var(--accent);
+    margin-right: 6px;
+  }
+
+  .result-item .name {
+    font-weight: 600;
+  }
+
+  .result-item .headline {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  .result-item .location {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  .result-item .rating {
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .result-item .reason {
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  .badge {
+    display: inline-block;
+    background: var(--badge-bg);
+    color: var(--badge-text);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 6px;
+  }
+
+  .result-item a {
+    color: var(--link);
+    text-decoration: none;
+    font-size: 13px;
+  }
+
+  .result-item a:hover {
+    text-decoration: underline;
+  }
+
+  .hidden {
+    display: none;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>RecruitMe Hunt</h1>
+
+  <div id="error-banner" class="error-banner hidden"></div>
+
+  <div id="job-picker-section" class="section">
+    <label for="job-select">Job</label>
+    <select id="job-select" disabled>
+      <option value="">Loading jobs...</option>
+    </select>
+  </div>
+
+  <div id="plan-section" class="section hidden">
+    <div class="job-meta">
+      <div class="title" id="plan-title"></div>
+      <div class="company" id="plan-company"></div>
+    </div>
+
+    <label for="location-input">Location</label>
+    <input type="text" id="location-input" placeholder="e.g. San Francisco, CA">
+
+    <ul class="query-list" id="query-list"></ul>
+
+    <div class="chips" id="must-haves"></div>
+
+    <div class="limits" id="limits"></div>
+
+    <div id="hunt-controls">
+      <button id="hunt-btn" class="btn" disabled>Hunt</button>
+      <button id="stop-btn" class="btn btn-danger hidden">Stop</button>
+    </div>
+  </div>
+
+  <div id="progress-section" class="section hidden">
+    <div class="progress">
+      <div class="progress-line" id="progress-queries"></div>
+      <div class="progress-line" id="progress-seen"></div>
+      <div class="progress-line" id="progress-captured"></div>
+      <div class="progress-line last-action" id="progress-last-action"></div>
+    </div>
+    <div id="warnings-container"></div>
+  </div>
+
+  <div id="halted-banner" class="halted-banner hidden"></div>
+
+  <div id="results-section" class="section hidden">
+    <h2>Results</h2>
+    <div class="results-list" id="results-list"></div>
+  </div>
+</div>
+
+<script src="hunt.js"></script>
+
+    <!-- Ask: DeepSeek drives the browser itself. Free-text instruction, the
+         model decides what to search, what to open and what to report. -->
+    <section id="ask-section" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border,rgba(128,128,128,.3))">
+      <h2 style="font-size:13px;margin:0 0 8px">Or just ask</h2>
+      <textarea id="ask-input" rows="4" placeholder="Find me the top 3 for this role and rate them out of 10. Also tell me how you searched."
+        style="width:100%;box-sizing:border-box;font:inherit;padding:8px;border-radius:6px;border:1px solid var(--border,rgba(128,128,128,.4));background:transparent;color:inherit"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+        <button id="ask-btn" type="button">Ask</button>
+        <button id="ask-stop-btn" type="button" hidden>Stop</button>
+        <span id="ask-status" style="font-size:12px;opacity:.75"></span>
+      </div>
+      <div id="ask-answer" style="margin-top:12px;white-space:pre-wrap;font-size:13px;line-height:1.5"></div>
+    </section>
+
+</body>
+</html>

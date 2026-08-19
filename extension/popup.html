@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RecruitMe Capture</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+      .wrap {
+        width: 320px;
+        padding: 14px 16px 16px;
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 700;
+      }
+      .gear-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        color: #94a3b8;
+        border-radius: 6px;
+        line-height: 0;
+        transition: color 0.15s, background 0.15s;
+      }
+      .gear-btn:hover { color: #475569; background: #f1f5f9; }
+      .connection {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 12px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 10px;
+      }
+      .connection.ok         { background: #ecfdf5; color: #065f46; }
+      .connection.error      { background: #fef2f2; color: #991b1b; }
+      .connection.unconfigured { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+      .dot {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .dot.green { background: #10b981; }
+      .dot.red   { background: #ef4444; }
+      .dot.grey  { background: #cbd5e1; }
+      .card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px;
+      }
+      .card + .card { margin-top: 8px; }
+      button.primary {
+        width: 100%;
+        border: 0;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 11px 12px;
+        cursor: pointer;
+        background: #0f766e;
+        color: #fff;
+        transition: opacity 0.15s;
+      }
+      button.primary:disabled { opacity: 0.45; cursor: not-allowed; }
+      button.setup-link {
+        width: 100%;
+        border: 1px dashed #cbd5e1;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 500;
+        padding: 11px 12px;
+        cursor: pointer;
+        background: transparent;
+        color: #475569;
+        transition: background 0.15s;
+      }
+      button.setup-link:hover { background: #f1f5f9; }
+      .status {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 8px;
+        min-height: 16px;
+        line-height: 1.4;
+      }
+      .status.error { color: #b91c1c; }
+      .status.ok    { color: #047857; }
+      .tiny {
+        font-size: 11px;
+        color: #94a3b8;
+        margin-bottom: 8px;
+        line-height: 1.4;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <h1>RecruitMe</h1>
+        <button class="gear-btn" id="settingsBtn" title="Open extension settings">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+      </div>
+
+      <div id="connectionStatus" class="connection unconfigured">
+        <span class="dot grey" id="statusDot"></span>
+        <span id="statusLabel">Checking…</span>
+      </div>
+
+      <div class="card">
+        <p id="pageStatus" class="tiny">Checking current tab…</p>
+        <button id="capturePending" class="primary" disabled>Capture pending fetch</button>
+        <div id="pendingStatus" class="status"></div>
+      </div>
+
+      <div id="autoCaptureCard" class="card" style="display:none;">
+        <p class="tiny" style="margin:0 0 4px;font-weight:600;color:#334155;">Auto-capture queue</p>
+        <p class="tiny" id="autoCaptureLine" style="margin:0;">—</p>
+        <p class="tiny" id="autoCaptureCounts" style="margin:4px 0 0;color:#94a3b8;">—</p>
+      </div>
+
+      <!-- Recent captures — visible in BOTH manual and auto modes. Recruiters
+           in manual mode still want to see "what was the last thing I captured"
+           when they open the popup. -->
+      <div id="recentCapturesCard" class="card" style="display:none;">
+        <p class="tiny" style="margin:0 0 6px;font-weight:600;color:#334155;">Recent captures</p>
+        <div id="recentCapturesList"></div>
+      </div>
+
+      <div id="setupCard" class="card" style="display:none;">
+        <button id="openSettingsBtn" class="setup-link">⚙ Open settings to connect RecruitMe</button>
+      </div>
+    </div>
+    <script src="popup.js"></script>
+    <!-- Hunt lives on its own page: it is a multi-minute trawl with live
+         progress, which a popup that closes on blur cannot host. -->
+    <p style="margin:12px 0 0;padding-top:12px;border-top:1px solid rgba(128,128,128,.3)">
+      <a id="open-hunt" href="hunt.html" target="_blank" rel="noreferrer"
+         style="font:inherit">Hunt LinkedIn for a job&nbsp;&rarr;</a>
+    </p>
+  </body>
+</html>

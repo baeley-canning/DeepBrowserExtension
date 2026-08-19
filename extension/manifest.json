@@ -1,0 +1,108 @@
+{
+  "manifest_version": 3,
+  "name": "Northsource Sourcing Agent",
+  "description": "Northsource Sourcing Agent: paste a role, search LinkedIn & SEEK, get a ranked shortlist — in your own browser session.",
+  "version": "4.1.0",
+  "permissions": [
+    "storage",
+    "tabs",
+    "activeTab",
+    "alarms",
+    "notifications",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "https://www.linkedin.com/*",
+    "https://*.seek.co.nz/*",
+    "https://*.seek.com.au/*",
+    "https://*.seek.com/*",
+    "https://*.employer.seek.com/*",
+    "https://*.up.railway.app/*",
+    "https://recruitme.railway.app/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*",
+    "https://api.deepseek.com/*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "RecruitMe — hunt LinkedIn",
+    "default_popup": "launch.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.linkedin.com/in/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.linkedin.com/search/results/people/*"
+      ],
+      "js": [
+        "results-content.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.linkedin.com/*",
+        "https://*.seek.co.nz/*",
+        "https://*.seek.com.au/*",
+        "https://*.seek.com/*",
+        "https://*.employer.seek.com/*"
+      ],
+      "js": [
+        "agent-page.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "card-parse.js",
+        "results-extract.js",
+        "bridge.js",
+        "vendor/pdf.js",
+        "vendor/pdf.worker.js"
+      ],
+      "matches": [
+        "https://www.linkedin.com/*"
+      ]
+    },
+    {
+      "resources": [
+        "bridge.js"
+      ],
+      "matches": [
+        "https://*.seek.co.nz/*",
+        "https://*.seek.com.au/*",
+        "https://*.seek.com/*",
+        "https://*.employer.seek.com/*"
+      ]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "recruitme-linkedin-capture@recruitme",
+      "strict_min_version": "109.0"
+    }
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "short_name": "Northsource"
+}
